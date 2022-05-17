@@ -1,84 +1,33 @@
 package SUSTech.CS307_project2.APIs;
 
-import com.sun.javafx.geom.transform.GeneralTransform3D;
+
+import SUSTech.CS307_project2.APIs.javaBean.Center;
+import SUSTech.CS307_project2.APIs.javaBean.Enterprise;
+import SUSTech.CS307_project2.APIs.javaBean.Model;
+import SUSTech.CS307_project2.APIs.javaBean.Staff;
 
 import java.io.*;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
 
-public class OriginData {
+public abstract class OriginData {
     //原始数据的对象
-    static class Center {
-        int id;
-        String center;
-        List columns = new ArrayList();
-
-        public Center(String[] row) {
-            this.id = Integer.parseInt(row[0]);
-            this.center = row[1];
-
-        }
-
-    }
-
-    static class Enterprise {
-        int id;
-        String name, country, city, supply_center, industry;
-
-        public Enterprise(String[] row) {
-            this.id = Integer.parseInt(row[0]);
-            this.name = row[1];
-            this.country = row[2];
-            this.city = row[3];
-            this.supply_center = row[4];
-            this.industry = row[5];
-
-        }
-    }
-
-    static class Model {
-        int id;
-        String number, model, name;
-        int unit_price;
-
-        public Model(String[] row) {
-            this.id = Integer.parseInt(row[0]);
-            this.number = row[1];
-            this.model = row[2];
-            this.name = row[3];
-            this.unit_price = Integer.parseInt(row[4]);
-        }
-    }
-
-    static class Staff {
-        int id;
-        String name, age, gender;
-        String number;
-        String supply_center, mobile_number, type;
-
-        public Staff(String[] row) {
-            this.id = Integer.parseInt(row[0]);
-            this.name = row[1];
-            this.age = row[2];
-            this.gender = row[3];
-            this.number = row[4];
-            this.supply_center = row[5];
-            this.mobile_number = row[6];
-            this.type = row[7];
-        }
-    }
-
     static Map<Class, List> data = new HashMap();
+
     static Map<Class, String> sqlString = new HashMap<>();
     //原始数据路径
     static String[] paths;
     //原始数据类名
     static String[] ClassName;
+
+    public static String[] getClassName() {
+        return ClassName;
+    }
+
     static String[] sqlStrings;
 
     static {
@@ -88,10 +37,10 @@ public class OriginData {
                 "src/main/resources/release-to-students/data/staff.csv"
         };
         ClassName = new String[]{
-                "SUSTech.CS307_project2.APIs.OriginData$Center",
-                "SUSTech.CS307_project2.APIs.OriginData$Enterprise",
-                "SUSTech.CS307_project2.APIs.OriginData$Model",
-                "SUSTech.CS307_project2.APIs.OriginData$Staff"
+                "SUSTech.CS307_project2.APIs.javaBean.Center",
+                "SUSTech.CS307_project2.APIs.javaBean.Enterprise",
+                "SUSTech.CS307_project2.APIs.javaBean.Model",
+                "SUSTech.CS307_project2.APIs.javaBean.Staff"
         };
         sqlStrings = new String[]{
                 "insert into center values(?,?)",
@@ -107,43 +56,22 @@ public class OriginData {
         sqlString.put(Enterprise.class, sqlStrings[1]);
         sqlString.put(Model.class, sqlStrings[2]);
         sqlString.put(Staff.class, sqlStrings[3]);
-        for (int i = 0; i < paths.length; i++) {
-            importOriginData(paths[i], ClassName[i]);
-        }
-//        List dataList;
-//        for (String className : ClassName) {
-//            try {
-//                String tableName=className.split("\\$")[1];
-//                Class clazz=Class.forName(className);
-//                dataList=data.get(clazz);
-//                Connection conn=JDBCUtils.getConn();
-//                PreparedStatement stmt= conn.prepareStatement(sqlString.get(clazz));
-//                if (tableName.equals("Center")){
-//                    List<Center>list=dataList;
-//                    for (Object column : list.get(0).columns) {
-//
-//                    }
-//                }
-//
-//            } catch (ClassNotFoundException e) {
-//                e.printStackTrace();
-//            } catch (SQLException e) {
-//                e.printStackTrace();
-//            }
-//        }
-
-
     }
 
-    public static void main(String[] args) throws ClassNotFoundException {
-        System.out.println(data.get(Class.forName(ClassName[0])).size());
+
+    public static void importOriData() {
+            for (int i = 0; i < paths.length; i++) {
+                createTable(paths[i], ClassName[i]);
+            }
     }
 
     //导入数据
-    private static void importOriginData(String path, String className) {
+    private static void createTable(String path, String className) {
         File file = new File(path);
+        String print = null;
         try (BufferedReader bf = new BufferedReader(new FileReader(file))) {
             Connection conn = JDBCUtils.getConn();
+            print = sqlString.get(Class.forName(className));
             PreparedStatement stmt = conn.prepareStatement(sqlString.get(Class.forName(className)));
             String line = "";
             String[] parts = null;
@@ -153,7 +81,6 @@ public class OriginData {
             while ((line = bf.readLine()) != null) {
                 line = line.replace(", ", "@");
                 parts = line.split(",");
-
                 if (parts[0].equals("id")) {
                     continue;
                 }
@@ -161,14 +88,12 @@ public class OriginData {
                 stmt.setInt(1, Integer.parseInt(parts[0]));
 
                 for (int i = 1; i < parts.length; i++) {
-                    parts[i]=parts[i].replace("@", ", ");
+                    parts[i] = parts[i].replace("@", ", ");
                     stmt.setString(i + 1, parts[i]);
                 }
                 stmt.execute();
             }
             stmt.close();
-
-
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (FileNotFoundException e) {
@@ -184,22 +109,21 @@ public class OriginData {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         } catch (SQLException e) {
-
             e.printStackTrace();
         }
 
 
     }
 
-    private void updateCsv() {
+    private static void updateCsv() {
 
     }
 
-    private void add_update_delete(String sql) {
+    private static void add_update_delete(String sql) {
         JDBCUtils.update(sql);
     }
 
-    private List<Object> query(String sql) {
+    private static List<Object> query(String sql) {
         return JDBCUtils.query(sql, Object.class);
     }
 

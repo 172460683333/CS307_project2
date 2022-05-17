@@ -1,16 +1,11 @@
 package SUSTech.CS307_project2.APIs;
 
 import com.alibaba.druid.pool.DruidDataSource;
-import com.alibaba.druid.pool.DruidDataSourceFactory;
-
-
-import javax.sql.DataSource;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
+
 
 public abstract class JDBCUtils {
     private static String host = "localhost";
