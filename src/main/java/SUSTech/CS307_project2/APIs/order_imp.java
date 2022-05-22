@@ -52,7 +52,7 @@ public class order_imp implements order {
         parts = new String[]{};
     }
 
-    private String[] readline() {
+    private String[] readline(String regex) {
         try {
             String line = bf.readLine();
             String[] lines = null;
@@ -60,9 +60,9 @@ public class order_imp implements order {
                 line = line.replace(", ", "$");
                 line = line.replace("-", "/");
                 if (line.contains("quantity") || line.contains("contract")) {
-                    lines = readline();
+                    lines = readline(regex);
                 } else {
-                    lines = line.split(",");
+                    lines = line.split(regex);
                 }
                 for (int i = 0; i < lines.length; i++) {
                     if (i==2){
@@ -90,7 +90,7 @@ public class order_imp implements order {
 //                System.out.println();
                 inventories.add(new Inventory(parts));
             }
-            parts = readline();
+            parts = readline(",");
         }
         Map<String, String> number_center = staff.stream().collect(Collectors.toMap(Staff::getNumber, Staff::getSupply_center));
         Map<String, Model> models = model.stream().collect(Collectors.toMap(Model::getModel, m -> m));
@@ -113,7 +113,7 @@ public class order_imp implements order {
             //        String supply_center, product_model, supply_staff;
             //        Date date;
             //        int purchase_price, quantity;
-
+            System.out.println(inventories.size());
             for (Inventory inventory : inventories) {
                 stmt.setInt(1, inventory.getId());
                 stmt.setString(2, inventory.getSupply_center());
@@ -155,7 +155,7 @@ public class order_imp implements order {
             if (parts.length != 0) {
                 orderList.add(new ContractInfo(parts));
             }
-            parts = readline();
+            parts = readline(",");
         }
         Map<String, Long> model_quantity_order = orderList.stream().collect(Collectors.groupingBy(ContractInfo::getProduct_model, Collectors.summingLong(ContractInfo::getQuantity)));
         Map<String, Long> model_quantity_inv = inventories.stream().collect(Collectors.groupingBy(Inventory::getProduct_model, Collectors.summingLong(Inventory::getQuantity)));
@@ -201,6 +201,21 @@ public class order_imp implements order {
     @Override
     public void updateOrder(String path) {
         setPath(path, 2);
+        while(parts!=null){
+            parts = readline("\t");
+            for (String part : parts) {
+                System.out.print(part+" ");
+            }
+            System.out.println("");
+        }
+
+        try{
+            Connection conn = JDBCUtils.getConn();
+            PreparedStatement stmt = conn.prepareStatement("");
+            stmt.execute();
+            stmt.close();
+        }catch (SQLException e){e.printStackTrace();}
+
     }
 
     @Override
@@ -210,7 +225,8 @@ public class order_imp implements order {
 
     public static void main(String[] args) {
         order_imp oi = new order_imp();
-        oi.stockIn(null);
-        oi.placeOrder(null);
+//        oi.stockIn(null);
+//        oi.placeOrder(null);
+        oi.updateOrder(null);
     }
 }
