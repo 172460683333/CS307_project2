@@ -122,7 +122,7 @@ public class order_imp implements order {
                 stmt.setDate(5, new Date(inventory.getDate().getTime()));
                 stmt.setInt(6, inventory.getPurchase_price());
                 stmt.setInt(7, inventory.getQuantity());
-                System.out.println(stmt);
+//                System.out.println(stmt);
                 stmt.execute();
             }
             stmt.close();
@@ -188,7 +188,7 @@ public class order_imp implements order {
                 stmt.setString(9, contractInfo.getSalesman_num());
                 stmt.setString(10, contractInfo.getContract_type());
                 stmt.execute();
-                System.out.println(stmt);
+//                System.out.println(stmt);
             }
 
             stmt.close();
@@ -201,19 +201,14 @@ public class order_imp implements order {
     @Override
     public void updateOrder(String path) {
         setPath(path, 2);
-        while(parts!=null){
-            parts = readline("\t");
-            for (String part : parts) {
-                System.out.print(part+" ");
-            }
-            System.out.println("");
-        }
 
         try{
             Connection conn = JDBCUtils.getConn();
-            PreparedStatement stmt = conn.prepareStatement("");
-            stmt.execute();
-            stmt.close();
+            while(parts!=null){
+                parts = readline("\t");
+
+
+            }
         }catch (SQLException e){e.printStackTrace();}
 
     }
