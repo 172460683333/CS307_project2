@@ -7,6 +7,8 @@ public interface query {
     public String getNeverSoldProductCount();   //9
     public String getFavoriteProductModel();    //10
     public String getAvgStockByCenter();        //11
-    public String getProductByNumber(String product_number);         //12
-    public String getContractInfo(String contract_number);            //13
+    public String getProductByNumber(String product_number);    //12
+    public String getContractInfo(String contract_number);      //13
+    public String getEnterpriseContract(String enterprise);     //14
+    public String getContractSalesman(String contract_number);  //15
 }
