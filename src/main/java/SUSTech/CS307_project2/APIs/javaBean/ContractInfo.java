@@ -13,6 +13,10 @@ public class ContractInfo {
     Date contract_date, estimated_delivery_date, lodgement_date;
     String salesman_num, contract_type;
 
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
     public String getContract_num() {
         return contract_num;
     }

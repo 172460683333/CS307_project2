@@ -13,6 +13,9 @@ public class Inventory {
     Date date;
     int purchase_price, quantity;
 
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
     public Inventory(String[] part) {
         this.id = Integer.parseInt(part[0]);
         this.supply_center = part[1];

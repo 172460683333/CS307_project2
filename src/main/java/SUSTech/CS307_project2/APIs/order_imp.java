@@ -1,9 +1,6 @@
 package SUSTech.CS307_project2.APIs;
 
-import SUSTech.CS307_project2.APIs.javaBean.ContractInfo;
-import SUSTech.CS307_project2.APIs.javaBean.Model;
-import SUSTech.CS307_project2.APIs.javaBean.Staff;
-import SUSTech.CS307_project2.APIs.javaBean.Inventory;
+import SUSTech.CS307_project2.APIs.javaBean.*;
 
 import java.io.*;
 import java.sql.Connection;
@@ -24,6 +21,9 @@ public class order_imp implements order {
     private BufferedReader bf;
     private File file;
     private String[] parts = {};
+
+
+    Map<String, String> number_center = new HashMap<>();
 
     static {
         paths_order = new ArrayList<>();
@@ -59,14 +59,15 @@ public class order_imp implements order {
             if (line != null) {
                 line = line.replace(", ", "$");
                 line = line.replace("-", "/");
+                //CSE0000327    ImageAlarm30	11112116	0	2022-04-01	2022-04-01
                 if (line.contains("quantity") || line.contains("contract")) {
                     lines = readline(regex);
                 } else {
                     lines = line.split(regex);
                 }
                 for (int i = 0; i < lines.length; i++) {
-                    if (i==2){
-                        lines[2]=lines[2].replace("/","-");
+                    if (i == 2) {
+                        lines[2] = lines[2].replace("/", "-");
                     }
                     lines[i] = lines[i].replace("$", ", ");
                 }
@@ -92,7 +93,7 @@ public class order_imp implements order {
             }
             parts = readline(",");
         }
-        Map<String, String> number_center = staff.stream().collect(Collectors.toMap(Staff::getNumber, Staff::getSupply_center));
+        number_center = staff.stream().collect(Collectors.toMap(Staff::getNumber, Staff::getSupply_center));
         Map<String, Model> models = model.stream().collect(Collectors.toMap(Model::getModel, m -> m));
         Map<String, String> number_type = staff.stream().collect(Collectors.toMap(Staff::getNumber, Staff::getType));
         //1. 供应中⼼与⼈员所在的供应中⼼对应不上 -> filter1
@@ -113,7 +114,6 @@ public class order_imp implements order {
             //        String supply_center, product_model, supply_staff;
             //        Date date;
             //        int purchase_price, quantity;
-            System.out.println(inventories.size());
             for (Inventory inventory : inventories) {
                 stmt.setInt(1, inventory.getId());
                 stmt.setString(2, inventory.getSupply_center());
@@ -133,23 +133,6 @@ public class order_imp implements order {
 
     @Override
     public void placeOrder(String path) {
-        try {
-            Connection conn = JDBCUtils.getConn();
-            PreparedStatement stmt;
-            stmt=conn.prepareStatement("drop table if exists order_list cascade ;create table if not exists order_list(\n" +
-                    "      contract_num varchar(88) ,\n" +
-                    "enterprise varchar(88),product_model varchar(88) ,\n" +
-                    "    quantity int,contract_manager varchar(88),\n" +
-                    "  contract_date Date ,estimated_delivery_date Date , lodgement_date Date ,\n" +
-                    "    salesman_num varchar(88),contract_type varchar(88)\n" +
-                    ");\n");
-            stmt.execute();
-            stmt.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-
         setPath(path, 1);
         while (parts != null) {
             if (parts.length != 0) {
@@ -164,8 +147,8 @@ public class order_imp implements order {
         //1. 订单中的商品数量⼤于库存数量(库存不存在)。（每个商品型号的库存在不同供应中⼼是不同的）
         //2. ⼈员类型不是“Salesman"
 
-        orderList = orderList.stream().filter(e -> model_quantity_inv.get(e.getProduct_model())!=null
-                        &&model_quantity_order.get(e.getProduct_model()) < model_quantity_inv.get(e.getProduct_model()))
+        orderList = orderList.stream().filter(e -> model_quantity_inv.get(e.getProduct_model()) != null
+                        && model_quantity_order.get(e.getProduct_model()) < model_quantity_inv.get(e.getProduct_model()))
                 .filter(e -> number_type.get(e.getSalesman_num()).equals("Salesman"))
                 .collect(Collectors.toList());
         PreparedStatement stmt = null;
@@ -177,6 +160,7 @@ public class order_imp implements order {
             //   Date contract_date,estimated_delivery_date, lodgement_date;
             //   String salesman_num,contract_type;
             for (ContractInfo contractInfo : orderList) {
+
                 stmt.setString(1, contractInfo.getContract_num());
                 stmt.setString(2, contractInfo.getEnterprise());
                 stmt.setString(3, contractInfo.getProduct_model());
@@ -190,38 +174,150 @@ public class order_imp implements order {
                 stmt.execute();
 //                System.out.println(stmt);
             }
-
             stmt.close();
 
+            for (ContractInfo con : orderList) {
+                for (Inventory inv : inventories) {
+                    if (inv.getProduct_model().equals(con.getProduct_model())
+                            && inv.getSupply_center().equals(number_center.get(con.getSalesman_num()))) {
+                        //库存list保留原始数据
+                        //inv.setQuantity(inv.getQuantity() - con.getQuantity());
+                        update_quantity(inv.getProduct_model(), inv.getSupply_center(), inv.getQuantity() - con.getQuantity());
+                        break;
+                    }
+                }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+    }
+
+    public void update_quantity(String model, String center, int quantity) {
+        try {
+            String sql = " update inventories set quantity = " + quantity +
+                    " where product_model = '" + model + "' and " + " supply_center = '" + center + "'";
+            Connection connection = JDBCUtils.getConn();
+            PreparedStatement stmt = connection.prepareStatement(sql);
+            System.out.println(stmt);
+            stmt.execute();
+            stmt.close();
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Override
     public void updateOrder(String path) {
-        setPath(path, 2);
-
-        try{
-            Connection conn = JDBCUtils.getConn();
-            while(parts!=null){
+        setPath(path, 3);
+        List<order_up> ups = new ArrayList<>();
+        try {
+            while (parts != null) {
                 parts = readline("\t");
-
-
+                if (parts != null)
+                    ups.add(new order_up(parts));
             }
-        }catch (SQLException e){e.printStackTrace();}
+            Map<String, List<ContractInfo>> id_contract = orderList.stream().collect(Collectors.groupingBy(ContractInfo::getSalesman_num));
+            //1. 销售员只能更新自己的订单。
+            //2. 更新订单数量的同时，库存数量也要随之改变
+            //3. 如果⼀个订单更新后的数量是0， 那么这个订单要在合同中移除
+            //4. 更新后，如果⼀个合同中没有订单，不要删除合同
+            //更新订单时inventories不变,orderList修改,但是不删除数量为0的订单
+            ups = ups.stream().filter(e -> {
+                        if (id_contract.containsKey(e.getSalesman())) {
+                            for (ContractInfo con : id_contract.get(e.getSalesman())) {
+                                if (con.getContract_num().equals(e.getContract())) {
+                                    return true;
+                                }
+                            }
+                        }
+                        return false;
+                    }
+            ).collect(Collectors.toList());
 
+            for (order_up up : ups) {
+                for (ContractInfo con : orderList) {
+                    if (up.getSalesman().equals(con.getSalesman_num()) &&
+                            up.getContract().equals(con.getContract_num())) {
+                        con.setQuantity(up.getQuantity());
+                    }
+                }
+                for (Inventory inv : inventories) {
+                    if (inv.getProduct_model().equals(up.getProduct_model())
+                            && inv.getSupply_center().equals(number_center.get(up.getSalesman()))) {
+
+                        update_quantity(inv.getProduct_model(), inv.getSupply_center(),
+                                inv.getQuantity() - up.getQuantity());
+                        break;
+                    }
+                }
+            }
+            JDBCUtils.getConn()
+                    .prepareStatement("delete from order_list cascade where quantity =0").execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+    }
+    public static List<ContractInfo> getOrderList() {
+        return orderList;
     }
 
     @Override
     public void deleteOrder(String path) {
-        setPath(path, 3);
+        setPath(path, 2);
+        List<order_de> des = new ArrayList<>();
+        while (parts != null) {
+            parts = readline("\t");
+            if (parts != null)
+                des.add(new order_de(parts));
+        }
+        for (order_de de : des) {
+            List<ContractInfo> order_salesman = new ArrayList<>();
+            for (ContractInfo con : orderList) {
+                if (con.getQuantity() == 0) {
+                    continue;
+                }
+                if (con.getContract_num().equals(de.getContract())
+                        && con.getSalesman_num().equals(de.getSalesman())) {
+                    order_salesman.add(con);
+                }
+            }
+            /*new Comparator<ContractInfo>() {
+                @Override
+                public int compare(ContractInfo o1, ContractInfo o2) {
+                    int result=o1.getEstimated_delivery_date().compareTo(o2.getEstimated_delivery_date());
+                    if (result==0){
+                        result=o1.getProduct_model().compareTo(o2.getProduct_model());
+                    }
+                    return result;
+                }
+            });*/
+            Collections.sort(order_salesman, Comparator.comparing(ContractInfo::getEstimated_delivery_date).thenComparing(ContractInfo::getProduct_model));
+            if (de.getSeq() <= order_salesman.size()) {
+                ContractInfo con = order_salesman.get(de.getSeq() - 1);
+                String sql = "delete from order_list where product_model='" + con.getProduct_model() +
+                        "' and contract_num='" + con.getContract_num() + "'";
+                try {
+                    PreparedStatement stmt = JDBCUtils.getConn().prepareStatement(sql);
+                    stmt.execute();
+                    System.out.println(stmt);
+                    stmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     public static void main(String[] args) {
         order_imp oi = new order_imp();
-//        oi.stockIn(null);
-//        oi.placeOrder(null);
+        oi.stockIn(null);
+        oi.placeOrder(null);
         oi.updateOrder(null);
+        oi.deleteOrder(null);
+
     }
 }

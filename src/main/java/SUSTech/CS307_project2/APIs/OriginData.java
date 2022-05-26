@@ -60,9 +60,53 @@ public abstract class OriginData {
 
 
     public static void importOriData() {
-            for (int i = 0; i < paths.length; i++) {
-                createTable(paths[i], ClassName[i]);
-            }
+        try {
+            Connection conn = JDBCUtils.getConn();
+            PreparedStatement stmt;
+            stmt = conn.prepareStatement("drop table if exists center cascade ;\n" +
+                    "drop table if exists enterprise cascade ;\n" +
+                    "drop table if exists model cascade ;\n" +
+                    "drop table if exists staff cascade ;\n" +
+                    "drop table if exists inventories cascade ;\n" +
+                    "drop table if exists order_list cascade ;\n" +
+                    "\n" +
+                    "create table center(id int primary key ,city varchar(88));\n" +
+                    "\n" +
+                    "create table enterprise(id int primary key ,name varchar(88),\n" +
+                    "            country varchar(88),city varchar(88),supply_center\n" +
+                    "                       varchar(88),industry varchar(88));\n" +
+                    "\n" +
+                    "create table model(id int primary key ,number varchar(88)\n" +
+                    "                  ,model_name varchar(88),name varchar(88),\n" +
+                    "                  unit_price varchar(88));\n" +
+                    "\n" +
+                    "create table staff(id int primary key ,name varchar(88)\n" +
+                    "                  ,age varchar(88),gender varchar(88),\n" +
+                    "                  number varchar(88) ,supply_center  varchar(88)\n" +
+                    "                  ,mobile_number varchar(88),type varchar(88));\n" +
+                    "\n" +
+                    "create table if not exists inventories(id int primary key,\n" +
+                    "         supply_center varchar(88), product_model varchar(88), supply_staff varchar(88),\n" +
+                    "        Date date,\n" +
+                    "         purchase_price int, quantity int\n" +
+                    ");\n" +
+                    "\n" +
+                    "create table if not exists order_list(\n" +
+                    "      contract_num varchar(88) ,\n" +
+                    "enterprise varchar(88),product_model varchar(88) ,\n" +
+                    "    quantity int,contract_manager varchar(88),\n" +
+                    "  contract_date Date ,estimated_delivery_date Date , lodgement_date Date ,\n" +
+                    "    salesman_num varchar(88),contract_type varchar(88)\n" +
+                    ");");
+            stmt.execute();
+            stmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        for (int i = 0; i < paths.length; i++) {
+            createTable(paths[i], ClassName[i]);
+        }
     }
 
     //导入数据

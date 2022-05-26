@@ -18,7 +18,6 @@ public class query_imp implements query{
                 int count = rs.getInt("count");
                 ans = ans + String.format("%-30s",type) + count + "\n";
             }
-
             rs.close();
             stmt.close();
             conn.close();
@@ -235,13 +234,13 @@ public class query_imp implements query{
 
     public static void main(String[] args) {
         query_imp qi = new query_imp();
-//        System.out.println(qi.getAllStaffCount());//6
-//        System.out.println(qi.getContractCount());//7
-//        System.out.println(qi.getOrderCount());//8
-//        System.out.println(qi.getNeverSoldProductCount());//9
-//        System.out.println(qi.getFavoriteProductModel());//10
-//        System.out.println(qi.getAvgStockByCenter());//11
-//        System.out.println(qi.getProductByNumber("E7R6098"));//12
+        System.out.println(qi.getAllStaffCount());//6
+        System.out.println(qi.getContractCount());//7
+        System.out.println(qi.getOrderCount());//8
+        System.out.println(qi.getNeverSoldProductCount());//9
+        System.out.println(qi.getFavoriteProductModel());//10
+        System.out.println(qi.getAvgStockByCenter());//11
+        System.out.println(qi.getProductByNumber("E7R6098"));//12
         System.out.println(qi.getContractInfo("CSE0000219"));//13
     }
 }

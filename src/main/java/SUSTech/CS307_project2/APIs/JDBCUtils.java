@@ -9,9 +9,9 @@ import java.util.List;
 
 public abstract class JDBCUtils {
     private static String host = "localhost";
-    private static String userName = "postgres";
+    private static String userName = "checker";
     private static String password = "123456";
-    private static String database = "postgres";
+    private static String database = "cs307";
     private static DruidDataSource dataSource;
 
 
@@ -38,6 +38,7 @@ public abstract class JDBCUtils {
                 dataSource.setPassword(password);
                 dataSource.setDbType("postgresql");
                 dataSource.setInitialSize(5);
+                dataSource.setMaxActive(15);
             } catch (Exception e) {
                 e.printStackTrace();
             }
