@@ -5,6 +5,14 @@ public class Center {
         int id;
         String city;
 
+    public int getId() {
+        return id;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
     public Center() {
     }
 

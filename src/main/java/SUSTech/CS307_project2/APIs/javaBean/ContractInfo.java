@@ -17,6 +17,17 @@ public class ContractInfo {
         this.quantity = quantity;
     }
 
+    @Override
+    public String toString() {
+        return "ContractInfo{" +
+                "contract_num='" + contract_num + '\'' +
+                ", enterprise='" + enterprise + '\'' +
+                ", product_model='" + product_model + '\'' +
+                ", quantity=" + quantity +
+                ", salesman_num='" + salesman_num + '\'' +
+                '}';
+    }
+
     public String getContract_num() {
         return contract_num;
     }
