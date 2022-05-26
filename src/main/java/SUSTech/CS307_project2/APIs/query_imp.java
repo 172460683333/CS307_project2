@@ -18,6 +18,7 @@ public class query_imp implements query{
                 int count = rs.getInt("count");
                 ans = ans + String.format("%-30s",type) + count + "\n";
             }
+
             rs.close();
             stmt.close();
             conn.close();
@@ -232,15 +233,68 @@ public class query_imp implements query{
         return ans;
     }
 
+    @Override//14
+    public String getEnterpriseContract(String enterprise){
+        String ans = "Q14\n";
+        try{
+            Connection conn = JDBCUtils.getConn();
+            String sql = "select contract_num, product_model, quantity from order_list where enterprise = '"+enterprise+"'";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            ResultSet rs = stmt.executeQuery();
+
+            while(rs.next()){
+                String num = rs.getString("contract_num");
+                String model = rs.getString("product_model");
+                int quantity = rs.getInt("quantity");
+                ans = ans + String.format("%-15s",num) + String.format("%-30s",model) + quantity + "\n";
+            }
+
+            rs.close();
+            stmt.close();
+            conn.close();
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+        return ans;
+    }
+
+    @Override
+    public String getContractSalesman(String contract_number){
+        String ans = "Q15\n";
+        try{
+            Connection conn = JDBCUtils.getConn();
+            String sql = "select salesman_num, name from order_list join staff\n" +
+                    "on order_list.salesman_num = staff.number\n" +
+                    "where contract_num = '"+contract_number+"'";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            ResultSet rs = stmt.executeQuery();
+
+            while(rs.next()){
+                String name = rs.getString("name");
+                String salesman_num = rs.getString("salesman_num");
+                ans = ans + String.format("%-15s",salesman_num) + name + "\n";
+            }
+
+            rs.close();
+            stmt.close();
+            conn.close();
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+        return ans;
+    }
+
     public static void main(String[] args) {
         query_imp qi = new query_imp();
-        System.out.println(qi.getAllStaffCount());//6
-        System.out.println(qi.getContractCount());//7
-        System.out.println(qi.getOrderCount());//8
-        System.out.println(qi.getNeverSoldProductCount());//9
-        System.out.println(qi.getFavoriteProductModel());//10
-        System.out.println(qi.getAvgStockByCenter());//11
-        System.out.println(qi.getProductByNumber("E7R6098"));//12
-        System.out.println(qi.getContractInfo("CSE0000219"));//13
+//        System.out.println(qi.getAllStaffCount());//6
+//        System.out.println(qi.getContractCount());//7
+//        System.out.println(qi.getOrderCount());//8
+//        System.out.println(qi.getNeverSoldProductCount());//9
+//        System.out.println(qi.getFavoriteProductModel());//10
+//        System.out.println(qi.getAvgStockByCenter());//11
+//        System.out.println(qi.getProductByNumber("E7R6098"));//12
+//        System.out.println(qi.getContractInfo("CSE0000219"));//13
+//        System.out.println(qi.getEnterpriseContract("Bank Of China"));//14
+        System.out.println(qi.getContractSalesman("CSE0000114"));//15
     }
 }
